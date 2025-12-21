@@ -1,78 +1,57 @@
-Expense Control - Sistema de Gestão Financeira
-O Expense Control é uma aplicação Fullstack desenvolvida para facilitar o controle de gastos e receitas residenciais. O sistema permite o gerenciamento de perfis de usuários, categorias financeiras personalizadas e o registro detalhado de transações, oferecendo uma visão clara da saúde financeira através de relatórios consolidados.
+# Expense Control - Fullstack Project
 
-Tecnologias Utilizadas
-Back-end
-Framework: .NET 8.
+O **Expense Control** é uma solução completa para gestão financeira residencial. Este repositório unifica a **API RESTful** desenvolvida em .NET e o **Client Web** moderno desenvolvido em React, oferecendo uma experiência de controle de gastos, receitas e relatórios consolidados.
 
-Banco de Dados: SQLite (Relacional, leve e portátil).
+---
 
-ORM: Entity Framework Core.
+## Estrutura do Repositório
 
-Testes: xUnit e Moq (Mocks de repositórios).
+O projeto está organizado em duas frentes principais, cada uma contendo sua própria documentação detalhada:
 
-Front-end
-Biblioteca: React 19 (Vite).
+* **`Expense-Control-Api`**: Camada de back-end responsável por toda a inteligência de negócio, persistência e API REST.
+* **`Expense-Control-Web`**: Camada de front-end responsável pela interface do usuário, interatividade e consumo de dados.
 
-Linguagem: TypeScript.
+---
 
-Estilização: Tailwind CSS v4.
+## Tecnologias e Ferramentas
 
-Consumo de API: Axios.
+### **Back-end (API)**
+* **Framework:** .NET 8.
+* **ORM:** Entity Framework Core para acesso a dados.
+* **Banco de Dados:** SQLite (Relacional, leve e portátil).
+* **Documentação:** Swagger/OpenAPI para testes de endpoints.
+* **Arquitetura:** Separação de responsabilidades (Application, Domain, Infra, CrossCutting).
 
-Funcionalidades e Regras de Negócio
-1. Gestão de Usuários (Perfis)
-Cadastro de usuários com nome e idade.
+### **Front-end (Web)**
+* **Biblioteca:** React 19 com Vite.
+* **Linguagem:** TypeScript para tipagem estática.
+* **Estilização:** Tailwind CSS v4 para design responsivo e moderno.
+* **Consumo de API:** Axios para requisições assíncronas.
+* **Navegação:** React Router DOM.
 
-Regra: Idade mínima de 7 anos para cadastro.
+---
 
-Exclusão em cascata (ao remover um usuário, suas categorias e transações são removidas).
+## Regras de Negócio Implementadas
 
-2. Categorias Financeiras
-Criação de categorias com finalidades específicas: Receita, Despesa ou Ambas.
+O sistema foi blindado com regras de negócio críticas na camada de aplicação:
+1. **Idade Mínima:** Cadastro de usuários permitido apenas para maiores de 7 anos.
+2. **Gestão de Receitas:** Usuários menores de 18 anos estão restritos ao registro de despesas, não podendo cadastrar receitas.
+3. **Consistência de Categorias:** O sistema valida se o tipo da transação (Receita/Despesa) é compatível com o propósito da categoria selecionada.
 
-Vinculação obrigatória a um dono (usuário).
+---
 
-3. Transações Financeiras
-Lançamentos de entrada e saída com descrição, valor e data.
+## Como Executar o Projeto
 
-Regra de Idade: Usuários menores de 18 anos não podem registrar receitas.
+### **Pré-requisitos**
+* .NET SDK 8.0+
+* Node.js v18.0+
 
-Regra de Consistência: Bloqueio de lançamentos cujo tipo (Receita/Despesa) divirja do propósito da categoria selecionada.
+Para instruções detalhadas de configuração e execução, consulte o arquivo **README.md** presente dentro de cada pasta específica.
 
-4. Relatórios
-Dashboard com Total de Receitas, Total de Despesas e Saldo Líquido.
+### **Execução Rápida**
+```bash
+# Para iniciar a API
+cd Expense-Control-Api && dotnet run
 
-Listagem de saldos individuais por membro da residência.
-
-Garantia de Qualidade (Testes)
-O sistema conta com testes unitários focados na camada de Application, garantindo que as regras de negócio sejam respeitadas independentemente da interface.
-
-Exemplos de Testes:
-
-CreateAsync_ShouldThrowException_WhenUserIsYoungerThan7
-
-CreateAsync_RecipeWithExpenseCategory_ThrowsException
-
-Pré-requisitos
-Para rodar o projeto localmente, você precisará de:
-
-Back-end: .NET SDK 8.0+.
-
-Front-end: Node.js v18.0+.
-
-Como Executar
-API:
-
-Bash
-
-cd ec-api
-dotnet ef database update
-dotnet run
-Web:
-
-Bash
-
-cd ec-web
-npm install
-npm run dev
+# Para iniciar o Front-end
+cd Expense-Control-Web && npm install && npm run dev
