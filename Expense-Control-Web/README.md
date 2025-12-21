@@ -2,7 +2,7 @@
 
 Aplicação web para controle de despesas pessoais, desenvolvida com React, TypeScript e Vite. O sistema permite gerenciar usuários, categorias financeiras e transações, além de fornecer relatórios consolidados de gastos e receitas.
 
-## 🚀 Tecnologias Utilizadas
+## Tecnologias Utilizadas
 
 - **React** (v19)
 - **TypeScript**
@@ -11,7 +11,7 @@ Aplicação web para controle de despesas pessoais, desenvolvida com React, Type
 - **Axios** (para consumo de API)
 - **React Router DOM**
 
-## 📋 Funcionalidades
+## Funcionalidades
 
 ### 1. Gestão de Usuários (Cadastros)
 - Cadastro de novos usuários com Nome e Idade.
@@ -37,14 +37,14 @@ Aplicação web para controle de despesas pessoais, desenvolvida com React, Type
 - Saldo Líquido Geral.
 - Detalhamento por usuário (Receitas, Despesas e Saldo Individual).
 
-## ⚙️ Regras de Negócio
+## Regras de Negócio
 
 - **Categorias**: Cada categoria deve pertencer a um usuário e ter uma finalidade definida (Receita, Despesa ou Ambas).
 - **Transações**: Toda transação deve estar vinculada a um usuário e a uma categoria existente.
 - **Exclusão**: A exclusão de um usuário é uma operação crítica que remove todos os dados associados a ele.
 - **API**: A aplicação consome uma API REST rodando em `http://localhost:5000/api`.
 
-## 📦 Instalação e Execução
+## Instalação e Execução
 
 ### Pré-requisitos
 - Node.js instalado.
@@ -69,14 +69,14 @@ Aplicação web para controle de despesas pessoais, desenvolvida com React, Type
 
 4. O projeto estará acessível em `http://localhost:5173` (porta padrão do Vite).
 
-## 🛠️ Comandos Disponíveis
+## Comandos Disponíveis
 
 - `npm run dev`: Inicia o servidor de desenvolvimento.
 - `npm run build`: Compila o projeto para produção.
 - `npm run lint`: Executa a verificação de código com ESLint.
 - `npm run preview`: Visualiza a versão de produção localmente.
 
-## 📂 Estrutura do Projeto
+## Estrutura do Projeto
 
 - `src/pages`: Componentes das páginas principais (Users, Categories, Transactions, Reports).
 - `src/services`: Configuração do Axios e chamadas à API.
