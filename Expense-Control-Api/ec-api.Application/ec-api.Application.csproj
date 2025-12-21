@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <RootNamespace>ec_api.Application</RootNamespace>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="FluentValidation" Version="12.1.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\ec-api.Domain\ec-api.Domain.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Remove="Exception\CustomException.cs" />
+    </ItemGroup>
+
+</Project>
