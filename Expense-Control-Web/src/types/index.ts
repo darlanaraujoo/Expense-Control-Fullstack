@@ -3,6 +3,7 @@
 export interface User {
   id: number;
   name: string;
+  email: string;
   age: number;
   createAt: string;
 }
@@ -36,4 +37,20 @@ export interface UserReportResponse {
   generalTotalRecipes: number;
   generalTotalExpenses: number;
   generalNetBalance: number;
+}
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface AuthUser {
+  id: number;
+  name: string;
+  email: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user?: AuthUser;
 }
