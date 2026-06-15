@@ -11,18 +11,21 @@ export interface User {
 export interface Category {
   id: number;
   description: string;
-  purpose: string; //Receita, Despesa, Ambos(a)
+  purpose: string;
   userName: string;
+  userId: number;
 }
 
 export interface Transaction {
   id: number;
   description: string;
   value: number;
-  type: string; //Receita, Despesa
+  type: string;
   categoryName: string;
   userName: string;
   transactionDate: string;
+  userId: number;
+  categoryId: number;
 }
 
 export interface UserReportItem {

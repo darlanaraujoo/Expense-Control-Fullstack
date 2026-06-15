@@ -92,7 +92,7 @@ export function Login() {
         email: fields.email.trim(),
         password: fields.password,
       });
-      navigate('/transactions', { replace: true });
+      navigate('/reports', { replace: true });
     } catch (error) {
       setAuthError(resolveAuthError(error));
     } finally {

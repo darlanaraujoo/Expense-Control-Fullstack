@@ -1,2 +1,32 @@
 @import "tailwindcss";
 @config "../tailwind.config.js";
+
+@keyframes toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(1.25rem) translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+}
+
+@keyframes toast-slide-out {
+  from {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(1.25rem) translateY(0.5rem);
+  }
+}
+
+.toast-enter {
+  animation: toast-slide-in 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.toast-exit {
+  animation: toast-slide-out 0.22s ease-in forwards;
+}

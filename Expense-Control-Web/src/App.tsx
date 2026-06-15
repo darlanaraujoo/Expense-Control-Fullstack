@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { ToastProvider } from './contexts/ToastContext';
 import { PrivateRoute } from './components/PrivateRoute';
 import { AppLayout } from './layouts/AppLayout';
 import { Login } from './pages/Login';
@@ -13,7 +14,7 @@ import { Reports } from './pages/Reports';
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
   if (isAuthenticated) {
-    return <Navigate to="/transactions" replace />;
+    return <Navigate to="/reports" replace />;
   }
   return children;
 }
@@ -41,7 +42,7 @@ function AppRoutes() {
 
       <Route element={<PrivateRoute />}>
         <Route element={<AppLayout />}>
-          <Route index element={<Navigate to="/transactions" replace />} />
+          <Route index element={<Navigate to="/reports" replace />} />
           <Route path="users" element={<Users />} />
           <Route path="categories" element={<Categories />} />
           <Route path="transactions" element={<Transactions />} />
@@ -58,9 +59,11 @@ function App() {
   return (
     <BrowserRouter>
       <ThemeProvider>
-        <AuthProvider>
-          <AppRoutes />
-        </AuthProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <AppRoutes />
+          </AuthProvider>
+        </ToastProvider>
       </ThemeProvider>
     </BrowserRouter>
   );

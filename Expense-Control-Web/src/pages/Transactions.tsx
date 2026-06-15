@@ -1,19 +1,27 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { api } from '../services/api';
-import type { User, Category, Transaction } from '../types';
+import { useAuth } from '../contexts/AuthContext';
+import { Modal } from '../components/Modal';
+import { TransactionFormModal } from '../components/TransactionFormModal';
+import { useToast } from '../hooks/useToast';
+import { resolveApiError } from '../utils/apiError';
+import { canManageRecord } from '../utils/permissions';
+import type { Category, Transaction, User } from '../types';
+
+type ModalState = { mode: 'create' } | { mode: 'edit'; transaction: Transaction } | null;
 
 export function Transactions() {
+  const { user: authUser } = useAuth();
+  const { showToast } = useToast();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [modal, setModal] = useState<ModalState>(null);
 
-  const [description, setDescription] = useState('');
-  const [value, setValue] = useState<number | string>('');
-  const [type, setType] = useState<number>();
-  const [userId, setUserId] = useState('');
-  const [categoryId, setCategoryId] = useState('');
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
     try {
       const [resTrans, resUsers, resCats] = await Promise.all([
         api.get<Transaction[]>('/Transactions'),
@@ -23,181 +31,184 @@ export function Transactions() {
       setTransactions(resTrans.data);
       setUsers(resUsers.data);
       setCategories(resCats.data);
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
+      showToast(resolveApiError(error, 'Erro ao carregar transações.'));
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, [showToast]);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleDelete = async (transaction: Transaction) => {
+    if (!canManageRecord(transaction.userId, authUser)) return;
+
+    if (!confirm(`Excluir a transação "${transaction.description}"?`)) return;
+
     try {
-      await api.post('/Transactions', {
-        description,
-        value: Number(value),
-        type,
-        userId: Number(userId),
-        categoryId: Number(categoryId),
-      });
-      setDescription('');
-      setValue('');
+      await api.delete(`/Transactions/${transaction.id}`);
+      showToast('Transação excluída com sucesso.', 'success');
       fetchData();
-      alert('Transação realizada');
-    } catch (err: any) {
-      alert(err.response?.data || 'Erro na transação');
+    } catch (error) {
+      showToast(resolveApiError(error, 'Erro ao excluir transação.'));
     }
   };
 
-  const fieldClass =
-    'w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-transparent dark:border-gray-700 text-gray-800 dark:text-white focus:bg-white dark:focus:bg-gray-800 focus:border-blue-500 outline-none transition-all text-sm';
+  const handleSuccess = () => {
+    showToast(
+      modal?.mode === 'edit'
+        ? 'Transação atualizada com sucesso.'
+        : 'Transação criada com sucesso.',
+      'success',
+    );
+    fetchData();
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 flex flex-col items-center transition-colors">
-      <div className="w-full max-w-5xl">
-        <header className="text-center mb-10">
-          <h1 className="text-3xl font-black text-gray-800 dark:text-white tracking-tight uppercase">
-            Transações
-          </h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
-            Registre entradas e saídas financeiras
-          </p>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4 transition-colors">
+      <div className="max-w-6xl mx-auto">
+        <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl font-black text-gray-800 dark:text-white tracking-tight uppercase">
+              Transações
+            </h1>
+            <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mt-1">
+              Registre entradas e saídas financeiras
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setModal({ mode: 'create' })}
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 dark:bg-[#00BFFF] dark:hover:bg-[#1565C0] text-white font-bold text-sm transition-colors shadow-md"
+          >
+            <Plus className="w-4 h-4" />
+            Nova Transação
+          </button>
         </header>
 
-        <form
-          onSubmit={handleCreate}
-          className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-xl shadow-blue-100/50 dark:shadow-none border border-blue-50 dark:border-gray-700 mb-12 transition-colors"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="space-y-1">
-              <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">
-                Descrição
-              </label>
-              <input
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Ex: Aluguel, Salário..."
-                className={fieldClass}
-                required
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">
-                Valor (R$)
-              </label>
-              <input
-                type="number"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                placeholder="0.00"
-                className={fieldClass}
-                required
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">
-                Tipo
-              </label>
-              <select
-                value={type}
-                onChange={(e) => setType(Number(e.target.value))}
-                className={`${fieldClass} cursor-pointer`}
-              >
-                <option value={1}>Receita</option>
-                <option value={2}>Despesa</option>
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">
-                Responsável
-              </label>
-              <select
-                value={userId}
-                onChange={(e) => setUserId(e.target.value)}
-                className={`${fieldClass} cursor-pointer`}
-                required
-              >
-                <option value="">Quem está pagando / recebendo?</option>
-                {users.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">
-                Categoria
-              </label>
-              <select
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-                className={`${fieldClass} cursor-pointer`}
-                required
-              >
-                <option value="">Vincular a uma categoria</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.description}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex items-end">
-              <button
-                type="submit"
-                className="cursor-pointer w-full h-[46px] bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-black py-2 rounded-2xl shadow-lg transition-all transform active:scale-95 uppercase text-xs tracking-widest"
-              >
-                Salvar Lançamento
-              </button>
-            </div>
-          </div>
-        </form>
-
         <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-colors">
-          <table className="w-full text-left">
-            <thead className="bg-gray-50/50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700 text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-              <tr>
-                <th className="px-6 py-4">Data</th>
-                <th className="px-6 py-4">Categoria</th>
-                <th className="px-6 py-4">Usuário</th>
-                <th className="px-6 py-4">Descrição</th>
-                <th className="px-6 py-4">Valor</th>
-                <th className="px-6 py-4 text-center">Tipo de Transação</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
-              {transactions.map((t) => (
-                <tr key={t.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                  <td className="px-6 py-4 text-xs text-gray-400 dark:text-gray-500">
-                    {new Date(t.transactionDate).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 text-gray-600 dark:text-gray-300 text-sm">{t.categoryName}</td>
-                  <td className="px-6 py-4 font-bold text-gray-700 dark:text-gray-200 text-sm">{t.userName}</td>
-                  <td className="px-6 py-4 text-gray-600 dark:text-gray-300 text-sm">{t.description}</td>
-                  <td className="px-6 py-4 font-mono font-bold text-gray-800 dark:text-white text-sm">
-                    R$ {t.value.toFixed(2)}
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <span
-                      className={`font-bold text-[10px] uppercase ${t.type === 'Recipe' ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}
-                    >
-                      {t.type === 'Recipe' ? 'Receita' : 'Despesa'}
-                    </span>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-gray-50/80 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700 text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                <tr>
+                  <th className="px-6 py-4">Data</th>
+                  <th className="px-6 py-4">Categoria</th>
+                  <th className="px-6 py-4">Usuário</th>
+                  <th className="px-6 py-4">Descrição</th>
+                  <th className="px-6 py-4">Valor</th>
+                  <th className="px-6 py-4 text-center">Tipo</th>
+                  <th className="px-6 py-4 text-right">Ações</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
+                      Carregando transações...
+                    </td>
+                  </tr>
+                ) : transactions.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
+                      Nenhuma transação registrada.
+                    </td>
+                  </tr>
+                ) : (
+                  transactions.map((transaction) => {
+                    const canManage = canManageRecord(transaction.userId, authUser);
+
+                    return (
+                      <tr
+                        key={transaction.id}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors"
+                      >
+                        <td className="px-6 py-4 text-xs text-gray-400 dark:text-gray-500">
+                          {new Date(transaction.transactionDate).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 text-gray-600 dark:text-gray-300 text-sm">
+                          {transaction.categoryName}
+                        </td>
+                        <td className="px-6 py-4 font-bold text-gray-700 dark:text-gray-200 text-sm">
+                          {transaction.userName}
+                        </td>
+                        <td className="px-6 py-4 text-gray-600 dark:text-gray-300 text-sm">
+                          {transaction.description}
+                        </td>
+                        <td className="px-6 py-4 font-mono font-bold text-gray-800 dark:text-white text-sm">
+                          R$ {transaction.value.toFixed(2)}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span
+                            className={`font-bold text-[10px] uppercase ${
+                              transaction.type === 'Recipe'
+                                ? 'text-green-500 dark:text-green-400'
+                                : 'text-red-500 dark:text-red-400'
+                            }`}
+                          >
+                            {transaction.type === 'Recipe' ? 'Receita' : 'Despesa'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              disabled={!canManage}
+                              onClick={() => setModal({ mode: 'edit', transaction })}
+                              title={
+                                canManage
+                                  ? 'Editar transação'
+                                  : 'Você só pode editar suas próprias transações'
+                              }
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide text-blue-600 dark:text-[#00BFFF] hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                              Editar
+                            </button>
+                            <button
+                              type="button"
+                              disabled={!canManage}
+                              onClick={() => handleDelete(transaction)}
+                              title={
+                                canManage
+                                  ? 'Excluir transação'
+                                  : 'Você só pode excluir suas próprias transações'
+                              }
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              Excluir
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
+
+      <Modal
+        title={modal?.mode === 'edit' ? 'Editar transação' : 'Nova transação'}
+        isOpen={modal !== null}
+        onClose={() => setModal(null)}
+      >
+        {modal && (
+          <TransactionFormModal
+            mode={modal.mode}
+            transaction={modal.mode === 'edit' ? modal.transaction : undefined}
+            users={users}
+            categories={categories}
+            onClose={() => setModal(null)}
+            onSuccess={handleSuccess}
+          />
+        )}
+      </Modal>
     </div>
   );
 }

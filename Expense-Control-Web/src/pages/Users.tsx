@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
-import { isAxiosError } from 'axios';
 import { api } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { ROOT_ADMIN_EMAIL } from '../constants/auth';
 import { Modal } from '../components/Modal';
 import { UserFormModal } from '../components/UserFormModal';
+import { useToast } from '../hooks/useToast';
+import { resolveApiError } from '../utils/apiError';
 import type { User } from '../types';
 
 type ModalState = { mode: 'create' } | { mode: 'edit'; user: User } | null;
@@ -20,6 +21,7 @@ function isUserProtected(userEmail: string, currentUserEmail?: string): boolean 
 
 export function Users() {
   const { user: authUser } = useAuth();
+  const { showToast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [modal, setModal] = useState<ModalState>(null);
@@ -48,13 +50,19 @@ export function Users() {
 
     try {
       await api.delete(`/Users/${user.id}`);
+      showToast('Usuário excluído com sucesso.', 'success');
       fetchUsers();
     } catch (error) {
-      const message = isAxiosError(error) && typeof error.response?.data === 'string'
-        ? error.response.data
-        : 'Erro ao excluir usuário.';
-      alert(message);
+      showToast(resolveApiError(error, 'Erro ao excluir usuário.'));
     }
+  };
+
+  const handleSuccess = () => {
+    showToast(
+      modal?.mode === 'edit' ? 'Usuário atualizado com sucesso.' : 'Usuário criado com sucesso.',
+      'success',
+    );
+    fetchUsers();
   };
 
   return (
@@ -166,7 +174,7 @@ export function Users() {
             mode={modal.mode}
             user={modal.mode === 'edit' ? modal.user : undefined}
             onClose={() => setModal(null)}
-            onSuccess={fetchUsers}
+            onSuccess={handleSuccess}
           />
         )}
       </Modal>

@@ -1,147 +1,204 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { api } from '../services/api';
-import type { User, Category } from '../types';
+import { useAuth } from '../contexts/AuthContext';
+import { Modal } from '../components/Modal';
+import { CategoryFormModal } from '../components/CategoryFormModal';
+import { useToast } from '../hooks/useToast';
+import { resolveApiError } from '../utils/apiError';
+import { canManageRecord } from '../utils/permissions';
+import type { Category, User } from '../types';
+
+type ModalState = { mode: 'create' } | { mode: 'edit'; category: Category } | null;
+
+const PURPOSE_LABELS: Record<string, string> = {
+  Recipe: 'Receita',
+  Expense: 'Despesa',
+  Both: 'Ambas',
+};
 
 export function Categories() {
+  const { user: authUser } = useAuth();
+  const { showToast } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [modal, setModal] = useState<ModalState>(null);
 
-  const [description, setDescription] = useState('');
-  const [purpose, setPurpose] = useState<number>(3);
-  const [userId, setUserId] = useState<number | string>('');
-
-  const fetchData = async () => {
-    const [resCats, resUsers] = await Promise.all([
-      api.get<Category[]>('/Categories'),
-      api.get<User[]>('/Users'),
-    ]);
-    setCategories(resCats.data);
-    setUsers(resUsers.data);
-  };
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [resCats, resUsers] = await Promise.all([
+        api.get<Category[]>('/Categories'),
+        api.get<User[]>('/Users'),
+      ]);
+      setCategories(resCats.data);
+      setUsers(resUsers.data);
+    } catch (error) {
+      console.error(error);
+      showToast(resolveApiError(error, 'Erro ao carregar categorias.'));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [showToast]);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleDelete = async (category: Category) => {
+    if (!canManageRecord(category.userId, authUser)) return;
+
+    if (!confirm(`Excluir a categoria "${category.description}"?`)) return;
+
     try {
-      await api.post('/Categories', {
-        description,
-        purpose,
-        userId: Number(userId),
-      });
-      setDescription('');
-      setUserId('');
+      await api.delete(`/Categories/${category.id}`);
+      showToast('Categoria excluída com sucesso.', 'success');
       fetchData();
-      alert('Categoria criada');
-    } catch (err: any) {
-      alert(err.response?.data || 'Erro ao criar categoria');
+    } catch (error) {
+      showToast(resolveApiError(error, 'Erro ao excluir categoria.'));
     }
   };
 
-  const purposeTranslations: Record<string, string> = {
-    Recipe: 'Receita',
-    Expense: 'Despesa',
-    Both: 'Ambas',
+  const handleSuccess = () => {
+    showToast(
+      modal?.mode === 'edit' ? 'Categoria atualizada com sucesso.' : 'Categoria criada com sucesso.',
+      'success',
+    );
+    fetchData();
   };
 
-  const inputClass =
-    'w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors';
-
   return (
-    <div className="p-8 max-w-5xl mx-auto">
-      <h1 className="text-center text-3xl font-black text-gray-800 dark:text-white tracking-tight uppercase">
-        Categorias
-      </h1>
-
-      <form
-        onSubmit={handleCreate}
-        className="mb-10 bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-xl border border-blue-50 dark:border-gray-700 transition-colors"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4 transition-colors">
+      <div className="max-w-5xl mx-auto">
+        <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-              Descrição
-            </label>
-            <input
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className={inputClass}
-              placeholder="Ex: Alimentação"
-              required
-            />
+            <h1 className="text-3xl font-black text-gray-800 dark:text-white tracking-tight uppercase">
+              Categorias
+            </h1>
+            <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mt-1">
+              Organize receitas e despesas por finalidade
+            </p>
           </div>
+          <button
+            type="button"
+            onClick={() => setModal({ mode: 'create' })}
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 dark:bg-[#00BFFF] dark:hover:bg-[#1565C0] text-white font-bold text-sm transition-colors shadow-md"
+          >
+            <Plus className="w-4 h-4" />
+            Nova Categoria
+          </button>
+        </header>
 
-          <div>
-            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-              Finalidade
-            </label>
-            <select
-              value={purpose}
-              onChange={(e) => setPurpose(Number(e.target.value))}
-              className={inputClass}
-            >
-              <option value={1}>Receita</option>
-              <option value={2}>Despesa</option>
-              <option value={3}>Ambas</option>
-            </select>
-          </div>
+        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-colors">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-gray-50/80 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700 text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                <tr>
+                  <th className="px-6 py-4">Descrição</th>
+                  <th className="px-6 py-4">Responsável</th>
+                  <th className="px-6 py-4">Finalidade</th>
+                  <th className="px-6 py-4 text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
+                      Carregando categorias...
+                    </td>
+                  </tr>
+                ) : categories.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
+                      Nenhuma categoria cadastrada.
+                    </td>
+                  </tr>
+                ) : (
+                  categories.map((category) => {
+                    const canManage = canManageRecord(category.userId, authUser);
 
-          <div>
-            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-              Responsável
-            </label>
-            <select
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              className={inputClass}
-              required
-            >
-              <option value="">Selecione um Usuário...</option>
-              {users.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.name}
-                </option>
-              ))}
-            </select>
+                    return (
+                      <tr
+                        key={category.id}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors"
+                      >
+                        <td className="px-6 py-4 font-semibold text-gray-800 dark:text-gray-200 text-sm">
+                          {category.description}
+                        </td>
+                        <td className="px-6 py-4 text-gray-600 dark:text-gray-300 text-sm">
+                          {category.userName}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase ${
+                              category.purpose === 'Recipe'
+                                ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
+                                : category.purpose === 'Expense'
+                                  ? 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300'
+                                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                            }`}
+                          >
+                            {PURPOSE_LABELS[category.purpose] || category.purpose}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              disabled={!canManage}
+                              onClick={() => setModal({ mode: 'edit', category })}
+                              title={
+                                canManage
+                                  ? 'Editar categoria'
+                                  : 'Você só pode editar suas próprias categorias'
+                              }
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide text-blue-600 dark:text-[#00BFFF] hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                              Editar
+                            </button>
+                            <button
+                              type="button"
+                              disabled={!canManage}
+                              onClick={() => handleDelete(category)}
+                              title={
+                                canManage
+                                  ? 'Excluir categoria'
+                                  : 'Você só pode excluir suas próprias categorias'
+                              }
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              Excluir
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
-
-        <button
-          type="submit"
-          className="cursor-pointer mt-6 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-bold py-3 px-10 rounded-xl shadow-lg transition-all"
-        >
-          Salvar Categoria
-        </button>
-      </form>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {categories.map((cat) => (
-          <div
-            key={cat.id}
-            className="bg-white dark:bg-gray-800 p-6 rounded-2xl border-l-8 border-l-blue-500 shadow-sm hover:shadow-md border border-transparent dark:border-gray-700 transition-all"
-          >
-            <h3 className="text-xl font-bold text-gray-800 dark:text-white">{cat.description}</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Dono:{' '}
-              <span className="font-semibold text-gray-700 dark:text-gray-300">{cat.userName}</span>
-            </p>
-            <span
-              className={`inline-block mt-4 px-3 py-1 rounded-full text-xs font-bold uppercase ${
-                cat.purpose === 'Recipe'
-                  ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
-                  : cat.purpose === 'Expense'
-                    ? 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-              }`}
-            >
-              {purposeTranslations[cat.purpose] || cat.purpose}
-            </span>
-          </div>
-        ))}
       </div>
+
+      <Modal
+        title={modal?.mode === 'edit' ? 'Editar categoria' : 'Nova categoria'}
+        isOpen={modal !== null}
+        onClose={() => setModal(null)}
+      >
+        {modal && (
+          <CategoryFormModal
+            mode={modal.mode}
+            category={modal.mode === 'edit' ? modal.category : undefined}
+            users={users}
+            onClose={() => setModal(null)}
+            onSuccess={handleSuccess}
+          />
+        )}
+      </Modal>
     </div>
   );
 }
