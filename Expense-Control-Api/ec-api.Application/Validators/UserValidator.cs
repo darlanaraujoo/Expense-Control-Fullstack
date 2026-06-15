@@ -16,5 +16,17 @@ public class UserValidator : AbstractValidator<UserCreateDto>
             .WithMessage("Idade deve ser um número positivo.")
             .NotEmpty()
             .WithMessage("Idade é obrigatória.");
+
+        RuleFor(x => x.Email)
+            .NotEmpty()
+            .WithMessage("E-mail é obrigatório.")
+            .EmailAddress()
+            .WithMessage("E-mail inválido.");
+
+        RuleFor(x => x.Password)
+            .NotEmpty()
+            .WithMessage("Senha é obrigatória.")
+            .MinimumLength(6)
+            .WithMessage("Senha deve ter pelo menos 6 caracteres.");
     }  
 }

@@ -59,12 +59,23 @@ O sistema implementa diversas regras de negócio para garantir a integridade e c
     ```bash
     dotnet restore
     ```
-4.  Execute a aplicação (o banco de dados SQLite `gastos.db` será criado automaticamente na raiz do projeto `ec-api` e as migrações serão aplicadas):
+4.  Execute a aplicação (o banco de dados SQLite `gastos.db` será criado automaticamente na raiz do projeto `ec-api`, as migrações serão aplicadas e um usuário administrador padrão será criado):
     ```bash
     dotnet run --project ec-api
     ```
 5.  Acesse o Swagger para testar os endpoints:
     *   Geralmente disponível em: `https://localhost:7196/swagger` ou `http://localhost:5148/swagger` (verifique o log do console para a porta correta).
+
+## Usuário padrão (desenvolvimento)
+
+Na primeira execução, o sistema cria automaticamente um usuário base caso ele ainda não exista:
+
+| Campo | Valor |
+|---|---|
+| E-mail | `admin@email.com` |
+| Senha | `admin123` |
+
+> **Atenção:** altere ou remova este usuário em ambientes de produção.
 
 ## Estrutura da Solução
 

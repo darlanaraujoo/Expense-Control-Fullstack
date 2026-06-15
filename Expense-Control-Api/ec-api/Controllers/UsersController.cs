@@ -1,10 +1,12 @@
 using ec_api.Application.DTOs;
 using ec_api.Application.Exception;
 using ec_api.Application.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ec_api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class UsersController : ControllerBase
@@ -15,7 +17,27 @@ public class UsersController : ControllerBase
         _userService = userService;
     }
 
+    [HttpPost("login")]
+    [AllowAnonymous]
+    public async Task<ActionResult<LoginResponseDto>> Login([FromBody] LoginRequestDto request)
+    {
+        try
+        {
+            var result = await _userService.LoginAsync(request);
+            return Ok(result);
+        }
+        catch (UnauthorizedException e)
+        {
+            return Unauthorized(e.Message);
+        }
+        catch (Exception)
+        {
+            return Problem("Ocorreu um erro interno no servidor. Tente novamente mais tarde.");
+        }
+    }
+
     [HttpPost]
+    [AllowAnonymous]
     public async Task<ActionResult<UserResponseDto>> Create([FromBody] UserCreateDto request)
     {
         try
@@ -65,6 +87,24 @@ public class UsersController : ControllerBase
         }
     }
     
+    [HttpPut("{id}")]
+    public async Task<ActionResult<UserResponseDto>> Update(int id, [FromBody] UserUpdateDto request)
+    {
+        try
+        {
+            var result = await _userService.UpdateAsync(id, request);
+            return Ok(result);
+        }
+        catch (CustomValidationException e)
+        {
+            return BadRequest(e.Message);
+        }
+        catch (Exception)
+        {
+            return Problem("Ocorreu um erro interno no servidor. Tente novamente mais tarde.");
+        }
+    }
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {

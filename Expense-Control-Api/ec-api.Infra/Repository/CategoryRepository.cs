@@ -16,5 +16,9 @@ public class CategoryRepository : BaseRepository<Category>, ICategoryRepository
             .AsNoTracking()
             .ToListAsync();
     }
-    
+
+    public Task<bool> HasLinkedTransactionsAsync(int categoryId)
+    {
+        return _context.Transactions.AnyAsync(t => t.CategoryId == categoryId);
+    }
 }

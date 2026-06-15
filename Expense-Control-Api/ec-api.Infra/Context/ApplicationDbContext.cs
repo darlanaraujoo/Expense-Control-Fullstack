@@ -1,4 +1,4 @@
-﻿using ec_api.DomainModel.Entities;
+using ec_api.DomainModel.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace ec_api.Infra.Context;
@@ -29,6 +29,16 @@ public class ApplicationDbContext : DbContext
                 .IsRequired();
             entity.HasIndex(x => x.Name)
                 .IsUnique();
+
+            entity.Property(x => x.Email)
+                .HasMaxLength(255)
+                .IsRequired();
+            entity.HasIndex(x => x.Email)
+                .IsUnique();
+
+            entity.Property(x => x.Password)
+                .HasMaxLength(255)
+                .IsRequired();
 
             entity.Property(x => x.Age)
                 .IsRequired();

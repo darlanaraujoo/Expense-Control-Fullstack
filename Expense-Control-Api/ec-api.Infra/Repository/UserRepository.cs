@@ -16,5 +16,11 @@ public class UserRepository : BaseRepository<User>, IUserRepository
             .AsNoTracking()
             .ToListAsync();
     }
-    
+
+    public async Task<User?> FindByEmailAsync(string email)
+    {
+        return await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
+    }
 }
