@@ -43,7 +43,7 @@ dotnet restore
 dotnet run --project ec-api
 ```
 
-A API estará rodando em `http://localhost:5000`. O Swagger pode ser acessado em `http://localhost:5000/swagger`.
+A API estará rodando em `http://localhost:5000`. A documentação interativa **Scalar** pode ser acessada em `http://localhost:5000/scalar`.
 
 ### 2. Subindo o Front-End (React)
 

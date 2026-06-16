@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ec_api.Controllers;
 
+/// <summary>
+/// Gerencia transações financeiras (receitas e despesas) vinculadas a usuários e categorias.
+/// </summary>
 [Authorize]
 [ApiController]
 [Route("api/[controller]")]
@@ -18,6 +21,9 @@ public class TransactionsController : ControllerBase
         _transactionService = transactionService;
     }
 
+    /// <summary>
+    /// Registra uma nova receita ou despesa associada a um usuário e uma categoria.
+    /// </summary>
     [HttpPost]
     public async Task<ActionResult<TransactionResponseDto>> Create([FromBody] TransactionCreateDto request)
     {
@@ -36,6 +42,9 @@ public class TransactionsController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Lista todas as transações com detalhes de categoria, usuário e valor.
+    /// </summary>
     [HttpGet]
     public async Task<ActionResult<List<TransactionResponseDto>>> List()
     {
@@ -54,6 +63,9 @@ public class TransactionsController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Atualiza os dados de uma transação existente pelo identificador.
+    /// </summary>
     [HttpPut("{id}")]
     public async Task<ActionResult<TransactionResponseDto>> Update(int id, [FromBody] TransactionUpdateDto request)
     {
@@ -72,6 +84,9 @@ public class TransactionsController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Remove permanentemente uma transação financeira pelo identificador.
+    /// </summary>
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {

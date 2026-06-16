@@ -6,17 +6,24 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ec_api.Controllers;
 
+/// <summary>
+/// Gerencia usuários, autenticação JWT e relatórios financeiros consolidados.
+/// </summary>
 [Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class UsersController : ControllerBase
 {
     private readonly IUserService _userService;
+
     public UsersController(IUserService userService)
     {
         _userService = userService;
     }
 
+    /// <summary>
+    /// Autentica um usuário com e-mail e senha e retorna um token JWT.
+    /// </summary>
     [HttpPost("login")]
     [AllowAnonymous]
     public async Task<ActionResult<LoginResponseDto>> Login([FromBody] LoginRequestDto request)
@@ -36,6 +43,9 @@ public class UsersController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Cadastra um novo usuário no sistema (acesso público para registro inicial).
+    /// </summary>
     [HttpPost]
     [AllowAnonymous]
     public async Task<ActionResult<UserResponseDto>> Create([FromBody] UserCreateDto request)
@@ -55,6 +65,9 @@ public class UsersController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Lista todos os usuários cadastrados.
+    /// </summary>
     [HttpGet]
     public async Task<ActionResult<List<UserResponseDto>>> List()
     {
@@ -72,7 +85,10 @@ public class UsersController : ControllerBase
             return Problem("Ocorreu um erro interno no servidor. Tente novamente mais tarde.");
         }
     }
-    
+
+    /// <summary>
+    /// Retorna o relatório financeiro consolidado com totais de receitas, despesas e saldo por usuário.
+    /// </summary>
     [HttpGet("report")]
     public async Task<ActionResult<UserReportResponseDto>> GetReport()
     {
@@ -86,7 +102,10 @@ public class UsersController : ControllerBase
             return Problem("Erro ao gerar o relatório de totais.");
         }
     }
-    
+
+    /// <summary>
+    /// Atualiza os dados de um usuário existente pelo identificador.
+    /// </summary>
     [HttpPut("{id}")]
     public async Task<ActionResult<UserResponseDto>> Update(int id, [FromBody] UserUpdateDto request)
     {
@@ -105,6 +124,9 @@ public class UsersController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Remove um usuário e todos os registros financeiros associados a ele.
+    /// </summary>
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {

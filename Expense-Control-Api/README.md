@@ -7,7 +7,7 @@ O **Expense Control** é uma API RESTful desenvolvida para o gerenciamento de co
 *   **.NET 8**: Plataforma de desenvolvimento.
 *   **Entity Framework Core**: ORM para acesso a dados.
 *   **SQLite**: Banco de dados relacional leve e portátil.
-*   **Swagger/OpenAPI**: Documentação interativa da API.
+*   **Scalar + OpenAPI (Swashbuckle)**: Documentação interativa da API em `/scalar`, com especificação OpenAPI em `/swagger/v1/swagger.json`.
 *   **Arquitetura em Camadas**: Separação de responsabilidades (API, Application, Domain, Infra, CrossCutting).
 
 ## Funcionalidades Principais
@@ -63,8 +63,10 @@ O sistema implementa diversas regras de negócio para garantir a integridade e c
     ```bash
     dotnet run --project ec-api
     ```
-5.  Acesse o Swagger para testar os endpoints:
-    *   Geralmente disponível em: `https://localhost:7196/swagger` ou `http://localhost:5148/swagger` (verifique o log do console para a porta correta).
+5.  Acesse o **Scalar** para explorar e testar os endpoints:
+    *   Documentação interativa: `http://localhost:5000/scalar`
+    *   Especificação OpenAPI (JSON): `http://localhost:5000/swagger/v1/swagger.json`
+    *   Autentique-se via `POST /api/Users/login` e envie o token JWT no cabeçalho `Authorization: Bearer {token}` nas rotas protegidas.
 
 ## Usuário padrão (desenvolvimento)
 

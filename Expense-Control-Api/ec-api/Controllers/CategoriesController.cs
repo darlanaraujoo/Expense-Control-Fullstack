@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ec_api.Controllers;
 
+/// <summary>
+/// Gerencia categorias financeiras vinculadas a usuários (receita, despesa ou ambas).
+/// </summary>
 [Authorize]
 [ApiController]
 [Route("api/[controller]")]
@@ -18,6 +21,9 @@ public class CategoriesController : ControllerBase
         _categoryService = categoryService;
     }
 
+    /// <summary>
+    /// Cria uma nova categoria financeira para classificar transações.
+    /// </summary>
     [HttpPost]
     public async Task<ActionResult<CategoryResponseDto>> Create([FromBody] CategoryCreateDto request)
     {
@@ -36,6 +42,9 @@ public class CategoriesController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Lista todas as categorias cadastradas com o responsável de cada uma.
+    /// </summary>
     [HttpGet]
     public async Task<ActionResult<List<CategoryResponseDto>>> List()
     {
@@ -54,6 +63,9 @@ public class CategoriesController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Atualiza a descrição, finalidade ou responsável de uma categoria existente.
+    /// </summary>
     [HttpPut("{id}")]
     public async Task<ActionResult<CategoryResponseDto>> Update(int id, [FromBody] CategoryUpdateDto request)
     {
@@ -72,6 +84,9 @@ public class CategoriesController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Exclui uma categoria. A operação é bloqueada se houver transações vinculadas.
+    /// </summary>
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
