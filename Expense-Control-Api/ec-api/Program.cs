@@ -4,6 +4,7 @@ using ec_api.Infra.Context;
 using ec_api.Infra.Seeding;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -16,18 +17,18 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        var dbPath = Path.Combine(builder.Environment.ContentRootPath, "gastos.db");
-        var connectionString = $"Data Source={dbPath}";
+        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+            ?? throw new InvalidOperationException("Connection string 'DefaultConnection' não encontrada.");
 
         builder.Services.AddDbContext<ApplicationDbContext>(optionsBuilder =>
         {
-            optionsBuilder.UseSqlite(connectionString,
+            optionsBuilder.UseNpgsql(connectionString,
                 x => x.MigrationsAssembly("ec-api.Infra"));
             optionsBuilder.LogTo(Console.WriteLine, LogLevel.Warning);
         });
 
         builder.Services.AddHealthChecks()
-            .AddSqlite(connectionString);
+            .AddNpgSql(connectionString);
 
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddControllers();
