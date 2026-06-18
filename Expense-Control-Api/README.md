@@ -5,8 +5,8 @@ O **Expense Control** é uma API RESTful desenvolvida para o gerenciamento de co
 
 ## Tecnologias Utilizadas
 *   **.NET 8**: Plataforma de desenvolvimento.
-*   **Entity Framework Core**: ORM para acesso a dados.
-*   **SQLite**: Banco de dados relacional leve e portátil.
+*   **Entity Framework Core 8.0.11**: ORM para acesso a dados.
+*   **PostgreSQL**: Banco de dados relacional (via `Npgsql.EntityFrameworkCore.PostgreSQL`).
 *   **Scalar + OpenAPI (Swashbuckle)**: Documentação interativa da API em `/scalar`, com especificação OpenAPI em `/swagger/v1/swagger.json`.
 *   **Arquitetura em Camadas**: Separação de responsabilidades (API, Application, Domain, Infra, CrossCutting).
 
@@ -50,23 +50,72 @@ O sistema implementa diversas regras de negócio para garantir a integridade e c
 
 ### Pré-requisitos
 *   .NET SDK 8.0+ instalado.
+*   **PostgreSQL 14+** instalado e em execução.
+*   Ferramenta global do EF Core (opcional, para migrations):
+    ```bash
+    dotnet tool install --global dotnet-ef
+    ```
 *   IDE de sua preferência (Rider, Visual Studio, VS Code).
 
+### Configuração do banco de dados
+
+1. Crie o database no PostgreSQL:
+
+    ```sql
+    CREATE DATABASE "ExpenseControl";
+    ```
+
+2. Configure a connection string em `ec-api/appsettings.json`:
+
+    ```json
+    {
+      "ConnectionStrings": {
+        "DefaultConnection": "Host=localhost;Port=5432;Database=ExpenseControl;Username=postgres;Password=suasenha"
+      }
+    }
+    ```
+
+    | Parâmetro  | Descrição                          |
+    |------------|------------------------------------|
+    | `Host`     | Endereço do servidor (ex: `localhost`) |
+    | `Port`     | Porta padrão `5432`                |
+    | `Database` | Nome do banco: `ExpenseControl`    |
+    | `Username` | Usuário do PostgreSQL             |
+    | `Password` | Senha do usuário                  |
+
 ### Passos
-1.  Clone o repositório.
-2.  Navegue até a pasta raiz da solução.
-3.  Restaure os pacotes NuGet:
+
+1. Clone o repositório.
+2. Navegue até a pasta da solução (`Expense-Control-Api`).
+3. Restaure os pacotes NuGet:
     ```bash
     dotnet restore
     ```
-4.  Execute a aplicação (o banco de dados SQLite `gastos.db` será criado automaticamente na raiz do projeto `ec-api`, as migrações serão aplicadas e um usuário administrador padrão será criado):
+4. Aplique as migrations no PostgreSQL:
+    ```bash
+    dotnet ef database update --project ec-api.Infra --startup-project ec-api
+    ```
+5. Execute a aplicação (as migrations também são aplicadas no startup via seed, e o usuário administrador padrão é criado automaticamente):
     ```bash
     dotnet run --project ec-api
     ```
-5.  Acesse o **Scalar** para explorar e testar os endpoints:
+6. Acesse o **Scalar** para explorar e testar os endpoints:
     *   Documentação interativa: `http://localhost:5000/scalar`
     *   Especificação OpenAPI (JSON): `http://localhost:5000/swagger/v1/swagger.json`
     *   Autentique-se via `POST /api/Users/login` e envie o token JWT no cabeçalho `Authorization: Bearer {token}` nas rotas protegidas.
+
+### Comandos úteis de migrations
+
+```bash
+# Criar uma nova migration
+dotnet ef migrations add NomeDaMigration --project ec-api.Infra --startup-project ec-api
+
+# Aplicar migrations pendentes
+dotnet ef database update --project ec-api.Infra --startup-project ec-api
+
+# Reverter para a migration anterior
+dotnet ef database update NomeMigrationAnterior --project ec-api.Infra --startup-project ec-api
+```
 
 ## Usuário padrão (desenvolvimento)
 
